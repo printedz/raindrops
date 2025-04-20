@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
@@ -25,6 +27,7 @@ public class Main implements ApplicationListener {
     private FitViewport viewport;
     private OrthographicCamera camera;
     Sprite bucketSprite;
+    Vector2 touchPos;
 
     @Override
     public void create() {
@@ -64,6 +67,8 @@ public class Main implements ApplicationListener {
         }
         bucketSprite = new Sprite(bucketTexture); // Initialize the sprite based on the texture
         bucketSprite.setSize(1, 1); // Define the size of the sprite
+
+        touchPos = new Vector2();
     }
 
     @Override
@@ -81,17 +86,34 @@ public class Main implements ApplicationListener {
     }
 
     private void input() {
-        float speed = .25f;
-        float delta = Gdx.graphics.getDeltaTime(); // retrieve the current delta
+        float speed = 4f;
+        float delta = Gdx.graphics.getDeltaTime();
 
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            bucketSprite.translateX(speed * delta); // Move the bucket right
+            bucketSprite.translateX(speed * delta);
+        } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            bucketSprite.translateX(-speed * delta);
+        }
+
+        if (Gdx.input.isTouched()) {
+            touchPos.set(Gdx.input.getX(), Gdx.input.getY()); // Get where the touch happened on screen
+            viewport.unproject(touchPos); // Convert the units to the world units of the viewport
+            bucketSprite.setCenterX(touchPos.x); // Change the horizontally centered position of the bucket
         }
     }
 
     private void logic() {
-        // Your game logic here
+        float worldWidth = viewport.getWorldWidth();
+        float worldHeight = viewport.getWorldHeight();
+
+        // Store the bucket size for brevity
+        float bucketWidth = bucketSprite.getWidth();
+        float bucketHeight = bucketSprite.getHeight();
+
+        // Subtract the bucket width
+        bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, worldWidth - bucketWidth));
     }
+
 
     private void draw() {
         ScreenUtils.clear(Color.BLACK);
@@ -107,9 +129,6 @@ public class Main implements ApplicationListener {
 
         spriteBatch.end();
     }
-
-
-
 
     @Override
     public void pause() {
