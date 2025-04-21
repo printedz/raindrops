@@ -49,14 +49,14 @@ public class Main implements ApplicationListener {
 
             // Load audio resources - with error handling
             try {
-                dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.wav")); // Changed to .wav format
+                dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3")); // Changed to .wav format
             } catch (Exception e) {
                 Gdx.app.log("Audio Error", "Could not load drop sound: " + e.getMessage());
                 dropSound = null; // Set to null to prevent null pointer exceptions
             }
 
             try {
-                music = Gdx.audio.newMusic(Gdx.files.internal("music.wav")); // Changed to .wav format
+                music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3")); // Changed to .wav format
             } catch (Exception e) {
                 Gdx.app.log("Audio Error", "Could not load music: " + e.getMessage());
                 music = null; // Set to null to prevent null pointer exceptions
@@ -80,6 +80,15 @@ public class Main implements ApplicationListener {
 
         bucketRectangle = new Rectangle();
         dropRectangle = new Rectangle();
+
+        // Add null check before using music
+        if (music != null) {
+            music.setLooping(true);
+            music.setVolume(.5f);
+            music.play();
+        } else {
+            Gdx.app.log("Audio Warning", "Background music could not be loaded and will be disabled");
+        }
     }
 
     @Override
@@ -122,7 +131,6 @@ public class Main implements ApplicationListener {
         bucketSprite.setX(MathUtils.clamp(bucketSprite.getX(), 0, worldWidth - bucketWidth));
 
         float delta = Gdx.graphics.getDeltaTime();
-        // Apply the bucket position and size to the bucketRectangle
         bucketRectangle.set(bucketSprite.getX(), bucketSprite.getY(), bucketWidth, bucketHeight);
 
         for (int i = dropSprites.size - 1; i >= 0; i--) {
@@ -131,12 +139,14 @@ public class Main implements ApplicationListener {
             float dropHeight = dropSprite.getHeight();
 
             dropSprite.translateY(-2f * delta);
-            // Apply the drop position and size to the dropRectangle
             dropRectangle.set(dropSprite.getX(), dropSprite.getY(), dropWidth, dropHeight);
 
             if (dropSprite.getY() < -dropHeight) dropSprites.removeIndex(i);
-            else if (bucketRectangle.overlaps(dropRectangle)) { // Check if the bucket overlaps the drop
-                dropSprites.removeIndex(i); // Remove the drop
+            else if (bucketRectangle.overlaps(dropRectangle)) {
+                dropSprites.removeIndex(i);
+                if (dropSound != null) {
+                    dropSound.play(); // Play the sound if it exists
+                }
             }
         }
 
